@@ -1,12 +1,14 @@
 package file;
 
+import domain.Message;
+import domain.Structure;
+
 import java.util.List;
-import java.util.Map;
 
 public interface FileHandle {
-    Map<String, List<String>> readStructFile(String structFilePath);
+    List<Structure> readStructFile(String structFilePath);
 
-    List<String> readMessageFile(String messageFilePath);
+    List<Message> readMessageFile(String messageFilePath);
 
     void writeValidMessage(List<String> validMessages);
 }

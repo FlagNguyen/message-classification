@@ -1,4 +1,4 @@
-package Util;
+package util;
 
 import constant.Constant;
 
@@ -14,7 +14,7 @@ public class StringUtil {
     private final Logger logger = Logger.getLogger(StringUtil.class.getName());
 
     public String getPhoneNumberFromMessage(String message) {
-        return message.trim().split("\\(")[0].trim().replaceAll("\\+84", "");
+        return message.trim().split("\\(")[0].trim();
     }
 
     public String getPrefixNumberFromMessage(String message) {

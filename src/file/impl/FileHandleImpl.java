@@ -1,8 +1,11 @@
 package file.impl;
 
-import Util.StringUtil;
 import constant.Constant;
+import domain.Message;
+import domain.Structure;
 import file.FileHandle;
+import util.SortMessageByTime;
+import util.StringUtil;
 
 import java.io.*;
 import java.util.*;
@@ -19,8 +22,8 @@ public class FileHandleImpl implements FileHandle {
      * key is number and map value is list of syntax string of this number
      */
     @Override
-    public Map<String, List<String>> readStructFile(String structFilePath) {
-        Map<String, List<String>> allSyntaxMap = new HashMap<>();
+    public List<Structure> readStructFile(String structFilePath) {
+        List<Structure> structureList = new ArrayList<>();
         File structFile = new File(structFilePath);
         String line = "";
         try {
@@ -33,12 +36,12 @@ public class FileHandleImpl implements FileHandle {
                 //The next elements will be syntax string for this number
                 String[] syntaxes = stringUtil.getSyntaxListFromSyntaxFile(line.trim().replace("\uFEFF", ""));
 
-                allSyntaxMap.put(keyNumber, Arrays.asList(syntaxes));
+                structureList.add(new Structure(keyNumber, Arrays.asList(syntaxes)));
             }
         } catch (IOException e) {
             logger.log(Level.WARNING, "Error: read file structure fail");
         }
-        return allSyntaxMap;
+        return structureList;
     }
 
 
@@ -47,18 +50,27 @@ public class FileHandleImpl implements FileHandle {
      * @return return list message
      */
     @Override
-    public List<String> readMessageFile(String messageFilePath) {
-        List<String> messageList = new ArrayList<>();
+    public List<Message> readMessageFile(String messageFilePath) {
+        List<Message> messageList = new ArrayList<>();
         File messageFile = new File(messageFilePath);
         String line = "";
         try {
             BufferedReader bufferedReader = new BufferedReader(new FileReader(messageFile));
             while ((line = bufferedReader.readLine()) != null) {
-                messageList.add(line.trim().replace("\uFEFF", ""));
+                line = line.trim().replace("\uFEFF", "");
+
+                String phoneNumber = stringUtil.getPhoneNumberFromMessage(line);
+                String content = stringUtil.getSyntaxFromMessage(line);
+                String time = stringUtil.getTimeStringFromMessage(line);
+                String prefixNumber = stringUtil.getPrefixNumberFromMessage(line);
+
+                messageList.add(new Message(phoneNumber, content, time, prefixNumber));
             }
         } catch (IOException e) {
             logger.log(Level.WARNING, "Error: read file message fail");
         }
+        Collections.sort(messageList, new SortMessageByTime());
+        logger.log(Level.INFO, "Read file message successfully");
         return messageList;
     }
 

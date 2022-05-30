@@ -1,12 +1,14 @@
 package service;
 
+import domain.Message;
+
 import java.util.List;
 
 public interface Service {
 
-    boolean isValidSyntax(String message);
+    boolean isValidSyntax(Message message);
 
     boolean isValidTime(String time);
 
-    List<String> validMessage(List<String> messageList);
+    List<String> validMessage(List<Message> messageList);
 }

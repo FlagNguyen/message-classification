@@ -1,10 +1,12 @@
 package service.impl;
 
-import Util.StringUtil;
 import constant.Constant;
+import domain.Message;
+import domain.Structure;
 import file.FileHandle;
 import file.impl.FileHandleImpl;
 import service.Service;
+import util.StringUtil;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -22,31 +24,35 @@ public class ServiceImpl implements Service {
      * @implNote check if the input message has a valid syntax, right prefix number, right syntax of this number
      */
     @Override
-    public boolean isValidSyntax(String message) {
-        Map<String, List<String>> allSyntax = fileHandle.readStructFile(Constant.STRUCT_FILE_PATH);
-        String prefixNumber = stringUtil.getPrefixNumberFromMessage(message);
-        String syntaxOfMessage = stringUtil.getSyntaxFromMessage(message);
+    public boolean isValidSyntax(Message message) {
+        boolean isValidSyntax = false;
+        List<Structure> allSyntax = fileHandle.readStructFile(Constant.STRUCT_FILE_PATH);
+        String prefixNumberFromMessage = message.getPrefixNumber();
+        String syntaxFromMessage = message.getContent();
+        List<String> syntaxOfPrefixNumber = new ArrayList<>();
 
-        if (!allSyntax.containsKey(prefixNumber)) {
-            return false;
+        for (int i = 0; i < allSyntax.size(); i++) {
+            if (prefixNumberFromMessage.equalsIgnoreCase(allSyntax.get(i).getPrefixNumber())) {
+                isValidSyntax = true;
+                syntaxOfPrefixNumber = allSyntax.get(i).getSyntaxes();
+                break;
+            }
         }
 
-        List<String> syntaxOfPrefixNumber = allSyntax.get(prefixNumber);
-        if (!syntaxOfPrefixNumber.contains(syntaxOfMessage)) {
-            return false;
+        if (!syntaxOfPrefixNumber.contains(syntaxFromMessage)) {
+            isValidSyntax = false;
         }
 
-        return true;
+        return isValidSyntax;
     }
 
     /**
-     * @param message
+     * @param time
      * @return true for valid message, and vice versa
      * @implNote check if the input message has a valid sending time with right format and not time in future
      */
     @Override
-    public boolean isValidTime(String message) {
-        String time = stringUtil.getTimeStringFromMessage(message);
+    public boolean isValidTime(String time) {
         //Check time format is valid
         boolean isValidTimeFormat = true;
         DateFormat dateFormat = new SimpleDateFormat(Constant.TIME_FORMAT);
@@ -77,29 +83,31 @@ public class ServiceImpl implements Service {
      * @return the list contain messages which satisfy all criteria of program
      */
     @Override
-    public List<String> validMessage(List<String> messageList) {
+    public List<String> validMessage(List<Message> messageList) {
         List<String> outputValidMessage = new ArrayList<>();
 
         //Remove message has invalid syntax and invalid time format
         for (int i = 0; i < messageList.size(); i++) {
-            if (!isValidTime(messageList.get(i)) || !isValidSyntax(messageList.get(i))) {
+            if (!isValidTime(messageList.get(i).getTime()) || !isValidSyntax(messageList.get(i))) {
                 messageList.remove(i);
             }
         }
 
         //Get set of phone number in message (not duplicate)
         Set<String> phoneNumberSet = new HashSet<>();
-        for (String message : messageList) {
-            phoneNumberSet.add(stringUtil.getPhoneNumberFromMessage(message));
+        for (Message message : messageList) {
+            phoneNumberSet.add(message.getPhoneNumber());
         }
 
         //Get messages of each of phone number
+        // Map: Key - phone number & value - list message which sent by this phone number
         Map<String, List<String>> messageMap = new HashMap<>();
         for (String phoneNumber : phoneNumberSet) {
+
             List<String> messageOfPhone = new ArrayList<>();
-            for (String message : messageList) {
-                if (phoneNumber.equals(stringUtil.getPhoneNumberFromMessage(message))) {
-                    messageOfPhone.add(message);
+            for (Message message : messageList) {
+                if (phoneNumber.equals(message.getPhoneNumber())) {
+                    messageOfPhone.add(message.toString());
                 }
                 messageOfPhone = sortTimeList(messageOfPhone);
                 messageMap.put(phoneNumber, messageOfPhone);
