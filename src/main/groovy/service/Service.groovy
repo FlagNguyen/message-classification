@@ -4,7 +4,7 @@ import domain.Message;
 
 import java.util.List;
 
-public interface Service {
+interface Service {
 
     boolean isValidSyntax(Message message);
 
