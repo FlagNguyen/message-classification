@@ -1,5 +1,6 @@
 package file.impl
 
+
 import constant.Constant
 import domain.Message
 import domain.Structure
@@ -8,17 +9,13 @@ import org.apache.commons.io.FileUtils
 import util.SortMessageByTime
 import util.StringUtil
 
-import java.io.*
-import java.util.*
-import java.util.logging.Level
 import java.util.logging.Logger
 
 class FileHandleImpl implements FileHandle {
-    private final Logger logger = Logger.getLogger(FileHandleImpl.class.getName())
     private final StringUtil stringUtil = new StringUtil()
+    private static Logger logger = Logger.getLogger(file.impl.FileHandleImpl.class.getName())
 
-    /**
-     * @param structFilePath
+     /** @param structFilePath
      * @return output is map which:
      * key is number and map value is list of syntax string of this number
      */
@@ -29,13 +26,13 @@ class FileHandleImpl implements FileHandle {
 
         List structureLines = FileUtils.readLines(structFile, "UTF-8")
 
-        for(String line: structureLines){
-            String prefixNumber = stringUtil.getPrefixNumberFromSyntax(line.trim().replace("\uFEFF",""))
-            String[] syntaxes = stringUtil.getSyntaxListFromSyntaxFile(line.trim().replace("\uFEFF",""))
+        for (String line : structureLines) {
+            String prefixNumber = stringUtil.getPrefixNumberFromSyntax(line.trim().replace("\uFEFF", ""))
+            String[] syntaxes = stringUtil.getSyntaxListFromSyntaxFile(line.trim().replace("\uFEFF", ""))
 
-            structures.add(new Structure(prefixNumber,Arrays.asList(syntaxes)))
+            structures.add(new Structure(prefixNumber, Arrays.asList(syntaxes)))
         }
-
+        logger.info("Read structure file successfully")
         return structures
     }
 
@@ -49,9 +46,9 @@ class FileHandleImpl implements FileHandle {
         List<Message> receivedMessages = new ArrayList<>()
         File messageFile = new File(messageFilePath)
 
-        List messageLines = FileUtils.readLines(messageFile,"UTF-8")
+        List messageLines = FileUtils.readLines(messageFile, "UTF-8")
 
-        for(String line: messageLines){
+        for (String line : messageLines) {
             String phoneNumber = stringUtil.getPhoneNumberFromMessage(line)
             String content = stringUtil.getSyntaxFromMessage(line)
             String time = stringUtil.getTimeStringFromMessage(line)
@@ -61,7 +58,8 @@ class FileHandleImpl implements FileHandle {
         }
 
         Collections.sort(receivedMessages, new SortMessageByTime())
-        logger.log(Level.INFO, "Read file message successfully")
+//        logger.log(Level.INFO, "Read file message successfully")
+        logger.info("Read file message successfully")
         return receivedMessages
     }
 
@@ -71,13 +69,14 @@ class FileHandleImpl implements FileHandle {
      */
     @Override
     void writeValidMessage(List<String> validMessages) {
-        Map<String, List<String>> mapWithPrefixNum = stringUtil.getMapWithPrefixNum(validMessages)
+        Map<String, List<String>> mapWithPrefixNum = stringUtil.getMapWithPrefixNumber(validMessages)
         for (String prefixNumber : mapWithPrefixNum.keySet()) {
             for (String mess : mapWithPrefixNum.get(prefixNumber)) {
-                FileUtils.write(new File(Constant.OUTPUT_MESSAGE_FILE_PATH + "+" + prefixNumber + ".txt"), mess+"\n",
+                FileUtils.write(new File(Constant.OUTPUT_MESSAGE_FILE_PATH + "+" + prefixNumber + ".txt"), mess + "\n",
                         "UTF-8", true)
             }
         }
+        logger.info("Write into file successfully")
     }
 }
 

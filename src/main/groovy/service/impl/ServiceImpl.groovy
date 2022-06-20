@@ -108,6 +108,7 @@ class ServiceImpl implements Service {
                 if (phoneNumber.equals(message.getPhoneNumber())) {
                     messageOfPhone.add(message.toString())
                 }
+                //Sort by time
                 messageOfPhone = sortTimeList(messageOfPhone)
                 messageMap.put(phoneNumber, messageOfPhone)
             }
@@ -117,7 +118,9 @@ class ServiceImpl implements Service {
             //Get list message which send by this phone number
             List<String> messageOfPhone = messageMap.get(phoneNumber)
 
-            // Get Map has key: prefix number value: list of message to this prefix number
+            // Get Map has key:
+            // K: prefix number value
+            // V: list of message which be sent to this prefix number
             Map<String, List<String>> messagesOfPrefixNumber = messageOfPrefixNumber(messageOfPhone)
             for (String prefixNumber : messagesOfPrefixNumber.keySet()) {
                 List<String> messages = messagesOfPrefixNumber.get(prefixNumber)
@@ -128,7 +131,7 @@ class ServiceImpl implements Service {
                     int i = 0
                     int j = 1
                     while (true) {
-                        if (stringUtil.getDateTimeFromMessage(messages.get(j)).getTime() -stringUtil.getDateTimeFromMessage(messages.get(i)).getTime() > Constant.ONE_MONTH) {
+                        if (stringUtil.getDateTimeFromMessage(messages.get(j)).getTime() - stringUtil.getDateTimeFromMessage(messages.get(i)).getTime() > Constant.ONE_MONTH) {
                             validMess.add(messages.get(i))
                             i = j
                             if (i == messages.size() - 1) {
@@ -179,8 +182,8 @@ class ServiceImpl implements Service {
      * @return sort input list by sending time and return the sorted list
      */
     private List<String> sortTimeList(List<String> messageList) {
-        for (int i = 0; i < messageList.size() - 1; i ++) {
-            for (int j = 0 ;j < messageList.size() - i - 1; j ++) {
+        for (int i = 0; i < messageList.size() - 1; i++) {
+            for (int j = 0; j < messageList.size() - i - 1; j++) {
                 if ((stringUtil.getDateTimeFromMessage(messageList.get(j)))
                         .after((stringUtil.getDateTimeFromMessage(messageList.get(j + 1))))) {
                     String temp = messageList.get(j)
