@@ -23,10 +23,8 @@ class ServiceImpl implements Service {
      * @implNote check if the input message has a valid syntax, right prefix number, right syntax of this number
      */
     @Override
-    boolean isValidSyntax(Message message) {
+    boolean isValidSyntax(Message message, List<Structure> syntaxStructures) {
         boolean isValidSyntax = false
-
-        List<Structure> syntaxStructures = fileHandle.readStructureFile(Constant.STRUCT_FILE_PATH)
 
         String prefixNumberFromMessage = message.getPrefixNumber()
         String syntaxFromMessage = message.getContent()
@@ -87,9 +85,11 @@ class ServiceImpl implements Service {
     List<String> validMessage(List<Message> inputRawMessages) {
         List<String> outputProcessedValidMessage = new ArrayList<>()
 
+        List<Structure> syntaxStructures = fileHandle.readStructureFile(Constant.STRUCT_FILE_PATH)
+
         //Remove message has invalid syntax and invalid time format
         for (int i = 0; i < inputRawMessages.size(); i++) {
-            if (!isValidTime(inputRawMessages.get(i).getTime()) || !isValidSyntax(inputRawMessages.get(i))) {
+            if (!isValidTime(inputRawMessages.get(i).getTime()) || !isValidSyntax(inputRawMessages.get(i), syntaxStructures)) {
                 inputRawMessages.remove(i)
             }
         }
