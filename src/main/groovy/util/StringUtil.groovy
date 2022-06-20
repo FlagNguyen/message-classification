@@ -5,8 +5,6 @@ import constant.Constant
 import java.text.DateFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.util.*
 import java.util.logging.Level
 import java.util.logging.Logger
 
@@ -50,18 +48,18 @@ class StringUtil {
         return syntaxes
     }
 
-    Map<String, List<String>> getMapWithPrefixNumber(List<String> messages) {
+    Map<String, List<String>> getMessagesByPrefixNumber(List<String> messages) {
         Map<String, List<String>> prefixNumbersAndCorrespondingMessages = new HashMap<>()
         Set<String> distinctPrefixNumbers = new HashSet<>()
 
         //Add prefix number to set
-        for (String message : messages) {
+        for (message in messages) {
             distinctPrefixNumbers.add(getPrefixNumberFromMessage(message))
         }
 
-        for (String prefixNumber : distinctPrefixNumbers) {
+        for (prefixNumber in distinctPrefixNumbers) {
             List<String> messagesOfPrefix = new ArrayList<>()
-            for (String message : messages) {
+            for (message in messages) {
                 if (getPrefixNumberFromMessage(message).equals(prefixNumber)) {
                     messagesOfPrefix.add(message)
                 }

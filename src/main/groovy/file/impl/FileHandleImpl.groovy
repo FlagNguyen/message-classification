@@ -22,17 +22,17 @@ class FileHandleImpl implements FileHandle {
     @Override
     List<Structure> readStructureFile(String structFilePath) {
         List<Structure> structures = new ArrayList<>()
-        File structFile = new File(structFilePath)
+        File structureFile = new File(structFilePath)
 
-        List structureLines = FileUtils.readLines(structFile, "UTF-8")
+        List structureLines = FileUtils.readLines(structureFile, "UTF-8")
 
-        for (String line : structureLines) {
+        for (line in structureLines) {
             String prefixNumber = stringUtil.getPrefixNumberFromSyntax(line.trim().replace("\uFEFF", ""))
             String[] syntaxes = stringUtil.getSyntaxListFromSyntaxFile(line.trim().replace("\uFEFF", ""))
 
             structures.add(new Structure(prefixNumber, Arrays.asList(syntaxes)))
         }
-        logger.info("Read structure file successfully")
+        logger.info("Read structure files "+structureFile+" successfully")
         return structures
     }
 
@@ -43,12 +43,12 @@ class FileHandleImpl implements FileHandle {
      */
     @Override
     List<Message> readMessageFile(String messageFilePath) {
-        List<Message> receivedMessages = new ArrayList<>()
+        List receivedMessages = new ArrayList<>()
         File messageFile = new File(messageFilePath)
 
         List messageLines = FileUtils.readLines(messageFile, "UTF-8")
 
-        for (String line : messageLines) {
+        for (line in messageLines) {
             String phoneNumber = stringUtil.getPhoneNumberFromMessage(line)
             String content = stringUtil.getSyntaxFromMessage(line)
             String time = stringUtil.getTimeStringFromMessage(line)
@@ -58,7 +58,6 @@ class FileHandleImpl implements FileHandle {
         }
 
         Collections.sort(receivedMessages, new SortMessageByTime())
-//        logger.log(Level.INFO, "Read file message successfully")
         logger.info("Read file message successfully")
         return receivedMessages
     }
@@ -69,10 +68,10 @@ class FileHandleImpl implements FileHandle {
      */
     @Override
     void writeValidMessage(List<String> validMessages) {
-        Map<String, List<String>> mapWithPrefixNum = stringUtil.getMapWithPrefixNumber(validMessages)
-        for (String prefixNumber : mapWithPrefixNum.keySet()) {
-            for (String mess : mapWithPrefixNum.get(prefixNumber)) {
-                FileUtils.write(new File(Constant.OUTPUT_MESSAGE_FILE_PATH + "+" + prefixNumber + ".txt"), mess + "\n",
+        Map<String, List<String>> messageByPrefixNum = stringUtil.getMessagesByPrefixNumber(validMessages)
+        for (prefixNumber in messageByPrefixNum.keySet()) {
+            for (message in messageByPrefixNum.get(prefixNumber)) {
+                FileUtils.write(new File(Constant.OUTPUT_MESSAGE_FILE_PATH + "+" + prefixNumber + ".txt"), message + "\n",
                         "UTF-8", true)
             }
         }

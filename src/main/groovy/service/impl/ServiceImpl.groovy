@@ -25,15 +25,17 @@ class ServiceImpl implements Service {
     @Override
     boolean isValidSyntax(Message message) {
         boolean isValidSyntax = false
-        List<Structure> allSyntax = fileHandle.readStructureFile(Constant.STRUCT_FILE_PATH)
+
+        List<Structure> syntaxStructures = fileHandle.readStructureFile(Constant.STRUCT_FILE_PATH)
+
         String prefixNumberFromMessage = message.getPrefixNumber()
         String syntaxFromMessage = message.getContent()
         List<String> syntaxOfPrefixNumber = new ArrayList<>()
 
-        for (int i = 0; i < allSyntax.size(); i++) {
-            if (prefixNumberFromMessage.equalsIgnoreCase(allSyntax.get(i).getPrefixNumber())) {
+        for (int i = 0; i < syntaxStructures.size(); i++) {
+            if (prefixNumberFromMessage.equalsIgnoreCase(syntaxStructures.get(i).getPrefixNumber())) {
                 isValidSyntax = true
-                syntaxOfPrefixNumber = allSyntax.get(i).getSyntaxes()
+                syntaxOfPrefixNumber = syntaxStructures.get(i).getSyntaxes()
                 break
             }
         }
@@ -78,101 +80,103 @@ class ServiceImpl implements Service {
     }
 
     /**
-     * @param messageList
+     * @param inputRawMessages
      * @return the list contain messages which satisfy all criteria of program
      */
     @Override
-    List<String> validMessage(List<Message> messageList) {
-        List<String> outputValidMessage = new ArrayList<>()
+    List<String> validMessage(List<Message> inputRawMessages) {
+        List<String> outputProcessedValidMessage = new ArrayList<>()
 
         //Remove message has invalid syntax and invalid time format
-        for (int i = 0; i < messageList.size(); i++) {
-            if (!isValidTime(messageList.get(i).getTime()) || !isValidSyntax(messageList.get(i))) {
-                messageList.remove(i)
+        for (int i = 0; i < inputRawMessages.size(); i++) {
+            if (!isValidTime(inputRawMessages.get(i).getTime()) || !isValidSyntax(inputRawMessages.get(i))) {
+                inputRawMessages.remove(i)
             }
         }
 
         //Get set of phone number in message (not duplicate)
-        Set<String> phoneNumberSet = new HashSet<>()
-        for (Message message : messageList) {
-            phoneNumberSet.add(message.getPhoneNumber())
+        Set<String> distinctPhoneNumbers = new HashSet<>()
+        for (Message message : inputRawMessages) {
+            distinctPhoneNumbers.add(message.getPhoneNumber())
         }
 
         //Get messages of each of phone number
         // Map: Key - phone number & value - list message which sent by this phone number
-        Map<String, List<String>> messageMap = new HashMap<>()
-        for (String phoneNumber : phoneNumberSet) {
+        Map<String, List<String>> messagesByPhoneNumber = new HashMap<>()
+        for (phoneNumber in distinctPhoneNumbers) {
 
             List<String> messageOfPhone = new ArrayList<>()
-            for (Message message : messageList) {
+            for (message in inputRawMessages) {
                 if (phoneNumber.equals(message.getPhoneNumber())) {
                     messageOfPhone.add(message.toString())
                 }
                 //Sort by time
                 messageOfPhone = sortTimeList(messageOfPhone)
-                messageMap.put(phoneNumber, messageOfPhone)
+                messagesByPhoneNumber.put(phoneNumber, messageOfPhone)
             }
         }
 
-        for (String phoneNumber : phoneNumberSet) {
-            //Get list message which send by this phone number
-            List<String> messageOfPhone = messageMap.get(phoneNumber)
 
+        for (phoneNumber in distinctPhoneNumbers) {
             // Get Map has key:
             // K: prefix number value
             // V: list of message which be sent to this prefix number
-            Map<String, List<String>> messagesOfPrefixNumber = messageOfPrefixNumber(messageOfPhone)
-            for (String prefixNumber : messagesOfPrefixNumber.keySet()) {
-                List<String> messages = messagesOfPrefixNumber.get(prefixNumber)
+            Map<String, List<String>> messagesByPrefixNumbers = classifyMessageByPrefixNumber(messagesByPhoneNumber.get(phoneNumber))
+            for (prefixNumber in messagesByPrefixNumbers.keySet()) {
+                List<String> messagesSentToPrefixNumber = messagesByPrefixNumbers.get(prefixNumber)
 
-
-                List<String> validMess = new ArrayList<>()
-                if (messages.size() != 1) {
+                List<String> validMessages = new ArrayList<>()
+                if (messagesSentToPrefixNumber.size() != 1) {
                     int i = 0
                     int j = 1
+
+                    /**
+                     * Check two consecutive messages sent 1 month apart
+                     */
                     while (true) {
-                        if (stringUtil.getDateTimeFromMessage(messages.get(j)).getTime() - stringUtil.getDateTimeFromMessage(messages.get(i)).getTime() > Constant.ONE_MONTH) {
-                            validMess.add(messages.get(i))
+                        if (stringUtil.getDateTimeFromMessage(messagesSentToPrefixNumber.get(j)).getTime() - stringUtil.getDateTimeFromMessage(messagesSentToPrefixNumber.get(i)).getTime() > Constant.ONE_MONTH) {
+                            validMessages.add(messagesSentToPrefixNumber.get(i))
                             i = j
-                            if (i == messages.size() - 1) {
-                                validMess.add(messages.get(i))
-                                break;
+                            if (i == messagesSentToPrefixNumber.size() - 1) {
+                                validMessages.add(messagesSentToPrefixNumber.get(i))
+                                break
                             }
                         }
                         ++j
                     }
-                    messages.clear()
-                    messages.addAll(validMess)
+                    messagesSentToPrefixNumber.clear()
+                    messagesSentToPrefixNumber.addAll(validMessages)
                 }
             }
             //Add valid message into outputValidMessage List.
-            for (List<String> list : messagesOfPrefixNumber.values()) {
-                outputValidMessage.addAll(list)
+            for (list in messagesByPrefixNumbers.values()) {
+                outputProcessedValidMessage.addAll(list)
             }
         }
-        return outputValidMessage
+        return outputProcessedValidMessage
     }
 
     /**
-     * @param messageOfPhone
+     * @param messagesSentByPhoneNumber
      * @return a Map which has: key - prefix number
      * and value is messages of each prefix number which send by the phoneNumber
      */
-    private Map<String, List<String>> messageOfPrefixNumber(List<String> messageOfPhone) {
+    private Map<String, List<String>> classifyMessageByPrefixNumber(List<String> messagesSentByPhoneNumber) {
         Map<String, List<String>> messagesOfPrefixNumber = new HashMap<>()
-        Set<String> prefixNumberSet = new HashSet<>()
-        for (String message : messageOfPhone) {
-            prefixNumberSet.add(stringUtil.getPrefixNumberFromMessage(message))
+
+        Set<String> distinctPrefixNumbers = new HashSet<>()
+        for (message in messagesSentByPhoneNumber) {
+            distinctPrefixNumbers.add(stringUtil.getPrefixNumberFromMessage(message))
         }
 
-        for (String prefixNumber : prefixNumberSet) {
-            List<String> specificMessage = new ArrayList<>()
-            for (String message : messageOfPhone) {
+        for (prefixNumber in distinctPrefixNumbers) {
+            List<String> messagesSentToPrefixNumber = new ArrayList<>()
+            for (message in messagesSentByPhoneNumber) {
                 if (prefixNumber.equals(stringUtil.getPrefixNumberFromMessage(message))) {
-                    specificMessage.add(message)
+                    messagesSentToPrefixNumber.add(message)
                 }
             }
-            messagesOfPrefixNumber.put(prefixNumber, specificMessage)
+            messagesOfPrefixNumber.put(prefixNumber, messagesSentToPrefixNumber)
         }
         return messagesOfPrefixNumber
     }

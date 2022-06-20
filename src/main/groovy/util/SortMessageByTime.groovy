@@ -1,15 +1,13 @@
-package util;
+package util
 
-import domain.Message;
-
-import java.util.Comparator;
+import domain.Message
 
 class SortMessageByTime implements Comparator<Message> {
-    private final StringUtil stringUtil = new StringUtil();
+    private final StringUtil stringUtil = new StringUtil()
 
     @Override
     int compare(Message o1, Message o2) {
         return stringUtil.convertStringToDate(o1.getTime())
-                .compareTo(stringUtil.convertStringToDate(o2.getTime()));
+                .compareTo(stringUtil.convertStringToDate(o2.getTime()))
     }
 }
